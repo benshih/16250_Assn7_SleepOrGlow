@@ -14,6 +14,9 @@
 #define GREEN PA7
 #define RED PB1
 #define BUTTON PB2
+// May not need these. Vestigial from assn6.
+#define READBUTTON PINB & _BV(PB2)
+#define SENSORVDD PB0
 
 uint8_t sleep_status;
 
@@ -23,5 +26,5 @@ void initButton(void);
 void goToSleep(void);
 
 void initSystem(void);
-
+uint8_t smallerNonZero(uint8_t one, uint8_t two);
 #endif
