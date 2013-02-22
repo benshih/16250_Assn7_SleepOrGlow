@@ -26,5 +26,6 @@ void initButton(void);
 void goToSleep(void);
 
 void initSystem(void);
-uint8_t smallerNonZero(uint8_t one, uint8_t two);
+uint8_t median(uint8_t a, uint8_t b, uint8_t c);
+uint8_t smallest(uint8_t a, uint8_t b, uint8_t c);
 #endif

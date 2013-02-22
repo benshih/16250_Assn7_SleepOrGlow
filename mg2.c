@@ -8,9 +8,9 @@
    Edit the three ISRs */
 
 // You should declare a bunch of volatile LED variables here
-volatile uint8_t red_led = 0;
-volatile uint8_t blue_led = 0;
-volatile uint8_t green_led = 0;
+uint8_t red_led = 0;
+uint8_t blue_led = 0;
+uint8_t green_led = 0;
 volatile uint8_t red_led_temp = 0;
 volatile uint8_t blue_led_temp = 0;
 volatile uint8_t green_led_temp = 0;
@@ -82,7 +82,7 @@ void initLED()
     TCCR0B |= _BV(CS02);
     TIMSK0 |= _BV(OCIE0A) | _BV(TOIE0);
     
-    // WDTCSR = _BV(WDP2) | _BV(WDP1) | _BV(WDP0); // Resets everything for me after a certain period of time just in case I mess up the chip.
+    // WDTCSR = _BV(WDP2) | _BV(WDP1) | _BV(WDP0); // Watchdog Timer resets everything for me after a certain period of time just in case I mess up the chip.
 	
 }
 
@@ -111,24 +111,25 @@ void initSystem()
 
 // Given two ints, return the smaller nonzero one. If either or both are
 // non-positive, automatically return the larger positive one or 0 if both are non-positive.
-uint8_t smallerNonZero(uint8_t one, uint8_t two)
+uint8_t median(uint8_t a, uint8_t b, uint8_t c)
 {
-    if(0 >= one)
-    {
-        return (two>0?two:0);
-    }
-    if(0 >= two)
-    {
-        return (one>0?one:0);
-    }
-    if(one > two)
-    {
-        return one;
-    }
+    if ((a-b)*(c-a) >= 0) // a is the median.
+        return a;
+    else if ((b-a)*(c-b) >= 0) // b is the median.
+        return b;
     else
-    {
-        return two;
-    }
+        return c;
+}
+
+uint8_t smallest(uint8_t a, uint8_t b, uint8_t c)
+{
+    uint8_t smallest = a;
+    if(smallest > b)
+        smallest = b;
+    if(smallest > c)
+        smallest = c;
+
+    return smallest;
 }
 
 /* Timer 0 overflow function, should do the follow:
@@ -144,35 +145,21 @@ ISR(TIM0_OVF_vect)
     green_led = green_led_temp;
 
     // Turn on any LED with a non-zero value.
-    if(0 != red_led)
-    {
+    if(red_led)
         PORTB &= ~_BV(RED);
-    }
     else
-    {
         PORTB |= _BV(RED);
-    }
-    if(0 != blue_led)
-    {
+    if(blue_led)
         PORTA &= ~_BV(BLUE);
-    }
     else
-    {
         PORTA |= _BV(BLUE);
-    }
-    if(0 != green_led)
-    {
+    if(green_led)
         PORTA &= ~_BV(GREEN);
-    }
     else
-    {
         PORTA |= _BV(GREEN);
-    }
 
     // Find the smallest non-zero LED value.
-
-    int tempMin = smallerNonZero(red_led, blue_led);
-    int min = smallerNonZero(tempMin, green_led);
+    uint8_t min = smallest(red_led, blue_led, green_led);
     
     // Set the output compare register A to that value.
     OCR0A = min;
@@ -201,14 +188,7 @@ ISR(TIM0_COMPA_vect)
 
     // Look for the next smallest LED value that is greater than the current
     // output compare value.
-    int temp_red = red_led - OCR0A;
-    int temp_blue = blue_led - OCR0A;
-    int temp_green = green_led - OCR0A;
-
-    int temp_min = smallerNonZero(temp_red, temp_blue);
-    int min = smallerNonZero(temp_min, temp_green);
-    
-    int nextSmallestLED = min + OCR0A;
+    uint8_t nextSmallestLED = median(red_led, green_led, blue_led);
 
     // Set the output compare value to the next smallest LED value so we can
     // interrupt again.
