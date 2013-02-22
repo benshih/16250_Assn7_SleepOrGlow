@@ -139,6 +139,8 @@ uint8_t smallest(uint8_t a, uint8_t b, uint8_t c)
 	* Set the output compare register A to that value */
 ISR(TIM0_OVF_vect)
 {
+    int min = 256;
+
 	// Load temporary led values into the regular values.
     red_led = red_led_temp;
     blue_led = blue_led_temp;
@@ -146,21 +148,24 @@ ISR(TIM0_OVF_vect)
 
     // Turn on any LED with a non-zero value.
     if(red_led)
+    {
         PORTB &= ~_BV(RED);
-    else
-        PORTB |= _BV(RED);
+        min = red_led;
+    }
     if(blue_led)
+    {
         PORTA &= ~_BV(BLUE);
-    else
-        PORTA |= _BV(BLUE);
+        if(blue_led < min)
+            min = blue_led;
+    }
     if(green_led)
+    {
         PORTA &= ~_BV(GREEN);
-    else
-        PORTA |= _BV(GREEN);
+        if(green_led < min)
+            min = green_led;
+    }
 
     // Find the smallest non-zero LED value.
-    uint8_t min = smallest(red_led, blue_led, green_led);
-    
     // Set the output compare register A to that value.
     OCR0A = min;
 }
@@ -174,17 +179,11 @@ ISR(TIM0_COMPA_vect)
     // Check if an LED value is the same as the output compare, and if so,
     // turn off the corresponding LED.
 	if(OCR0A == red_led)
-    {
         PORTB |= _BV(RED);
-    }
     if(OCR0A == blue_led)
-    {
         PORTA |= _BV(BLUE);
-    }
     if(OCR0A == green_led)
-    {
         PORTA |= _BV(GREEN);
-    }
 
     // Look for the next smallest LED value that is greater than the current
     // output compare value.
